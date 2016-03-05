@@ -224,19 +224,36 @@ class SLIRGDImage extends SLIRImage implements SLIRImageLibrary
    * @return SLIRImageLibrary
    * @since 2.0
    */
-  public function resample(SLIRImageLibrary $destination)
+  public function resample(SLIRImageLibrary $destination, $fit = false)
   {
+    $srcW = $this->getWidth();
+    $srcH = $this->getHeight();
+    $dstW = $destination->getWidth();
+    $dstH = $destination->getHeight();
+
+    if ($fit) {
+      $ratio = max($srcW/$dstW, $srcH/$dstH);
+
+      $dstX = ($dstW - $srcW / $ratio) / 2;
+      $dstY = ($dstH - $srcH / $ratio) / 2;
+
+      $dstW = $srcW / $ratio;
+      $dstH = $srcH / $ratio;
+    } else {
+      $dstX = $dstY = 0;
+    }
+
     imagecopyresampled(
-        $destination->getImage(),
-        $this->getImage(),
-        0,
-        0,
-        0,
-        0,
-        $destination->getWidth(),
-        $destination->getHeight(),
-        $this->getWidth(),
-        $this->getHeight()
+      $destination->getImage(),
+      $this->getImage(),
+      $dstX,
+      $dstY,
+      0,
+      0,
+      $dstW,
+      $dstH,
+      $srcW,
+      $srcH
     );
 
     return $this;
@@ -332,6 +349,8 @@ class SLIRGDImage extends SLIRImage implements SLIRImageLibrary
   {
     imagealphablending($this->getImage(), false);
     imagesavealpha($this->getImage(), true);
+
+    imagefill($this->getImage(), 0, 0, imagecolorallocatealpha($this->getImage(), 255, 255, 255, 127));
 
     $this->transparencyEnabled = true;
 

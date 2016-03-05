@@ -42,10 +42,11 @@ interface SLIRImageLibrary
    * @param SLIRImageLibrary $destination
    * @param integer $width
    * @param integer $height
+   * @param bool $fit
    * @return SLIRImageLibrary
    * @since 2.0
    */
-  public function resample(SLIRImageLibrary $destination);
+  public function resample(SLIRImageLibrary $destination, $fit = false);
 
   /**
    * Copies the image into the destination image without reszing

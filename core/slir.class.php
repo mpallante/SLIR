@@ -306,15 +306,53 @@ class SLIR
       require_once 'libs/gd/slirgdimage.class.php';
       $this->source = new SLIRGDImage($this->getRequest()->path);
 
-      // If either a max width or max height are not specified or larger than
-      // the source image we default to the dimension of the source image so
-      // they do not become constraints on our resized image.
-      if (!$this->getRequest()->width || $this->getRequest()->width > $this->source->getWidth()) {
-        $this->getRequest()->width = $this->source->getWidth();
-      }
+      if ($this->getRequest()->isFitting()) {
+        $requestedWidth = $this->getRequest()->width;
+        $requestedHeight = $this->getRequest()->height;
 
-      if (!$this->getRequest()->height ||  $this->getRequest()->height > $this->source->getHeight()) {
-        $this->getRequest()->height = $this->source->getHeight();
+        if ($requestedWidth === null) {
+          if ($requestedHeight === null || $requestedHeight > $this->source->getHeight()) {
+            $requestedHeight = $this->source->getHeight();
+          }
+          $ratio = $requestedHeight / $this->source->getHeight();
+          $requestedWidth = round($ratio * $this->source->getWidth());
+        } elseif ($requestedHeight === null) {
+          if ($requestedWidth === null || $requestedWidth > $this->source->getWidth()) {
+            $requestedWidth = $this->source->getWidth();
+          }
+          $ratio = $requestedWidth / $this->source->getWidth();
+          $requestedHeight = round($ratio * $this->source->getHeight());
+
+        } else if ($requestedWidth > $this->source->getWidth() && $requestedHeight > $this->source->getHeight()) {
+          // Both requested height and width are specified
+          $requestRatio = ($requestedWidth >= $requestedHeight)
+              ? $requestedWidth / $requestedHeight
+              : $requestedHeight / $requestedHeight;
+
+          if ($requestedWidth / $this->source->getWidth() >= $requestedHeight / $this->source->getHeight()) {
+            $requestedWidth = $this->source->getWidth();
+            $requestedHeight = round($requestedWidth * $requestRatio);
+          } else {
+            $requestedHeight = $this->source->getHeight();
+            $requestedWidth = round($requestedHeight * $requestRatio);
+          }
+        }
+
+        $this->getRequest()->width = $requestedWidth;
+        $this->getRequest()->height = $requestedHeight;
+
+      } else {
+
+        // If either a max width or max height are not specified or larger than
+        // the source image we default to the dimension of the source image so
+        // they do not become constraints on our resized image.
+        if (!$this->getRequest()->width || $this->getRequest()->width > $this->source->getWidth()) {
+          $this->getRequest()->width = $this->source->getWidth();
+        }
+
+        if (!$this->getRequest()->height || $this->getRequest()->height > $this->source->getHeight()) {
+          $this->getRequest()->height = $this->source->getHeight();
+        }
       }
     }
 
@@ -350,9 +388,14 @@ class SLIR
         need to be computed based on the desired method (smart or centered),
         and the image needs to be cropped to the specified dimensions.
 
-      If cropping an image is not required, we need to compute the dimensions
-      of the image without cropping. These must both be less than or equal to
-      maxWidth and maxHeight.
+      If fitting an image is required, we need to:
+        1. Compute the resized image size, based on the given maxWidth and
+         maxHeight and the ratio of the source image.
+        2. Compute the scaling of the source image.
+
+      If neither cropping or fitting an image is not required, we need to
+      compute the dimensions of the image without cropping. These must both
+      be less than or equal to maxWidth and maxHeight.
       */
       if ($this->isCroppingNeeded()) {
         // Determine the dimensions of the source image after cropping and
@@ -369,7 +412,11 @@ class SLIR
         }
       }
 
-      if ($this->shouldResizeBasedOnWidth()) {
+      if ($this->getRequest()->isFitting()) {
+        $this->rendered->setWidth($this->getRequest()->width);
+        $this->rendered->setHeight($this->getRequest()->height);
+
+      } else if ($this->shouldResizeBasedOnWidth()) {
         $resizeFactor = $this->resizeWidthFactor();
         $this->rendered->setHeight(round($resizeFactor * $this->getSource()->getHeight()));
         $this->rendered->setWidth(round($resizeFactor * $this->getSource()->getWidth()));
@@ -391,9 +438,9 @@ class SLIR
         } // if
       } else if ($this->isCroppingNeeded()) {
         // No resizing is needed but we still need to crop
-        $ratio  = ($this->resizeUncroppedWidthFactor() > $this->resizeUncroppedHeightFactor())
-          ? $this->resizeUncroppedWidthFactor()
-          : $this->resizeUncroppedHeightFactor();
+        $ratio = ($this->resizeUncroppedWidthFactor() > $this->resizeUncroppedHeightFactor())
+            ? $this->resizeUncroppedWidthFactor()
+            : $this->resizeUncroppedHeightFactor();
 
         $this->rendered->setWidth(round($ratio * $this->getSource()->getWidth()));
         $this->rendered->setHeight(round($ratio * $this->getSource()->getHeight()));
@@ -601,10 +648,10 @@ class SLIR
     $this->getRendered()->background();
 
     // Resample the original image into the resized canvas we set up earlier
-    if ($this->getSource()->getWidth() !== $this->getRendered()->getWidth() || 
+    if ($this->getSource()->getWidth() !== $this->getRendered()->getWidth() ||
         $this->getSource()->getHeight() != $this->getRendered()->getHeight()) {
 
-      $this->getSource()->resample($this->getRendered());
+      $this->getSource()->resample($this->getRendered(), $this->getRequest()->isFitting());
     } else {
       // No resizing is needed, so make a clean copy
       $this->getSource()->copy($this->getRendered());

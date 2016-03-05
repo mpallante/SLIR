@@ -102,6 +102,12 @@ class SLIRRequest
   private $progressive;
 
   /**
+   * Whether fit the image in the requested width and height
+   * @var boolean
+   */
+  private $fit;
+
+  /**
    * Color to fill background of transparent PNGs and GIFs
    * @var string
    * @since 2.0
@@ -207,6 +213,11 @@ class SLIRRequest
       case 'cropRatio':
         $this->setCropRatio($value);
           break;
+
+      case 'f':
+      case 'fit':
+        $this->setFit($value);
+        break;
     } // switch
   }
 
@@ -268,6 +279,18 @@ class SLIRRequest
    * @param string $value
    * @return void
    */
+  private function setFit($value)
+  {
+    if ($this->isCropping()) {
+      throw new RuntimeException('You cannot enable fit after crop');
+    }
+    $this->fit = (bool) $value;
+  }
+
+  /**
+   * @param string $value
+   * @return void
+   */
   private function setBackgroundFillColor($value)
   {
     $this->background = preg_replace('/[^0-9a-fA-F]/', '', $value);
@@ -290,6 +313,9 @@ class SLIRRequest
    */
   private function setCropRatio($value)
   {
+    if ($this->isFitting()) {
+      throw new RuntimeException('You cannot set crop after fit');
+    }
     $delimiters = preg_quote(self::CROP_RATIO_DELIMITERS);
     $ratio      = preg_split("/[$delimiters]/", (string) urldecode($value));
     if (count($ratio) >= 2) {
@@ -355,6 +381,7 @@ Available parameters:
  q = Quality (0-100)
  b = Background fill color (RRGGBB or RGB)
  p = Progressive (0 or 1)
+ f = Fit (0 or 1, not compatible with crop)
 
 Example usage:
 /slir/w300-h300-c1.1/path/to/image.jpg');
@@ -389,7 +416,7 @@ Example usage:
   {
     if (SLIRConfig::$forceQueryString === true) {
       return true;
-    } else if (!empty($_SERVER['QUERY_STRING']) && count(array_intersect(array('i', 'w', 'h', 'q', 'c', 'b', 'p'), array_keys($_GET)))) {
+    } else if (!empty($_SERVER['QUERY_STRING']) && count(array_intersect(array('i', 'w', 'h', 'q', 'c', 'b', 'p', 'f'), array_keys($_GET)))) {
       return true;
     } else {
       return false;
@@ -536,4 +563,11 @@ Example usage:
     }
   }
 
+  /**
+   * @return boolean
+   */
+  final public function isFitting()
+  {
+    return $this->fit === true;
+  }
 }

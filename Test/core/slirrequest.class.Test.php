@@ -351,6 +351,102 @@ class SLIRRequestTest extends SLIRTestCase
   /**
    * @test
    */
+  public function setFitWithNumericStringOne()
+  {
+    $request = new SLIRRequest();
+    $this->assertFalse($request->isFitting());
+    $request->fit = '1';
+    $this->assertSame($request->fit, true);
+    $this->assertTrue($request->isFitting());
+  }
+
+  /**
+   * @test
+   */
+  public function setFitWithNumericStringZero()
+  {
+    $request = new SLIRRequest();
+    $this->assertFalse($request->isFitting());
+    $request->fit = '0';
+    $this->assertSame($request->fit, false);
+    $this->assertFalse($request->isFitting());
+  }
+
+  /**
+   * @test
+   */
+  public function setFitWithNumericStringGreaterThanOne()
+  {
+    $request = new SLIRRequest();
+    $this->assertFalse($request->isFitting());
+    $request->fit = '100';
+    $this->assertSame($request->fit, true);
+    $this->assertTrue($request->isFitting());
+  }
+
+  /**
+   * @test
+   */
+  public function setFitWithNumericStringLessThanZero()
+  {
+    $request = new SLIRRequest();
+    $this->assertFalse($request->isFitting());
+    $request->fit = '-100';
+    $this->assertSame($request->fit, true);
+    $this->assertTrue($request->isFitting());
+  }
+
+  /**
+   * @test
+   */
+  public function setFitWithNonNumericString()
+  {
+    $request = new SLIRRequest();
+    $this->assertFalse($request->isFitting());
+    $request->fit = 'test';
+    $this->assertSame($request->fit, true);
+    $this->assertTrue($request->isFitting());
+  }
+
+  /**
+   * @test
+   */
+  public function setFitWithNonNumericStringFalse()
+  {
+    $request = new SLIRRequest();
+    $this->assertFalse($request->isFitting());
+    $request->fit = 'false';
+    $this->assertSame($request->fit, true);
+    $this->assertTrue($request->isFitting());
+  }
+
+  /**
+   * @test
+   */
+  public function setFitWithEmptyString()
+  {
+    $request = new SLIRRequest();
+    $this->assertFalse($request->isFitting());
+    $request->fit = '';
+    $this->assertSame($request->fit, false);
+    $this->assertFalse($request->isFitting());
+  }
+
+  /**
+   * @test
+   */
+  public function setFitWithIntegerOne()
+  {
+    $request = new SLIRRequest();
+    $this->assertFalse($request->isFitting());
+    $request->fit = 1;
+    $this->assertSame($request->fit, true);
+    $this->assertTrue($request->isFitting());
+  }
+
+  /**
+   * @test
+   */
   public function setBackgroundWithLongHexUppercase()
   {
     $request = new SLIRRequest();
@@ -791,6 +887,45 @@ class SLIRRequestTest extends SLIRTestCase
 
     $this->assertSame($request->path, $_GET['i']);
     $this->assertSame($request->width, 100);
+  }
+
+  /**
+   * @test
+   */
+  public function initializeWithFit()
+  {
+    $request = new SLIRRequest();
+
+    $_SERVER['REQUEST_URI'] = '/slir/f1/slir/Test/images/camera-logo.png';
+    $request->initialize();
+
+    $this->assertSame($request->fit, true);
+  }
+
+  /**
+   * @test
+   * @expectedException RuntimeException
+   * @expectedExceptionMessage You cannot enable fit after crop
+   */
+  public function initializeWithCropAndFit()
+  {
+    $request = new SLIRRequest();
+
+    $_SERVER['REQUEST_URI'] = '/slir/c1x1-f1/slir/Test/images/camera-logo.png';
+    $request->initialize();
+  }
+
+  /**
+   * @test
+   * @expectedException RuntimeException
+   * @expectedExceptionMessage You cannot set crop after fit
+   */
+  public function initializeWithFitAndCrop()
+  {
+    $request = new SLIRRequest();
+
+    $_SERVER['REQUEST_URI'] = '/slir/f1-c1x1/slir/Test/images/camera-logo.png';
+    $request->initialize();
   }
 
   /**
