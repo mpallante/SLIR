@@ -804,7 +804,7 @@ class SLIR
    */
   private function isBackgroundFillOn()
   {
-    if ($this->getRequest()->isBackground() && $this->getSource()->isAbleToHaveTransparency()) {
+    if ($this->getRequest()->isBackground() || $this->getSource()->isAbleToHaveTransparency()) {
       return true;
     } else {
       return false;

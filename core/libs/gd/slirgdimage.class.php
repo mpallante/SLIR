@@ -366,7 +366,7 @@ class SLIRGDImage extends SLIRImage implements SLIRImageLibrary
   {
     $color = $this->getBackground();
 
-    if ($color === null) {
+    if ($color === null || $color === false) {
       $color = "ffffff";
     }
 
@@ -389,10 +389,9 @@ class SLIRGDImage extends SLIRImage implements SLIRImageLibrary
           hexdec($color[2].$color[3]),
           hexdec($color[4].$color[5])
       );
-
     }
 
-    imagefilledrectangle($this->getImage(), 0, 0, $this->getWidth(), $this->getHeight(), $background);
+    imagefill($this->getImage(), 0, 0, $background);
 
     return $this;
   }

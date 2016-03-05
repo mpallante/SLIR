@@ -524,6 +524,8 @@ abstract class SLIRImage
         // Fill the background with the specified color for matting purposes
         $this->fill($this->getBackground());
       }
+    } else {
+      $this->fill($this->getBackground());
     }
 
     return $this;
