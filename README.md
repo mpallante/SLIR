@@ -62,6 +62,11 @@ To use SLIR, place an `<img\>` tag with the `src` attribute pointing to the path
       <td>Progressive</td>
       <td><code>/slir/<strong>p1</strong>/path/to/image.jpg</code></td>
     </tr>
+    <tr>
+      <td><var>f</var></td>
+      <td>Fit</td>
+      <td><code>/slir/<strong>f1</strong>/path/to/image.jpg</code></td>
+    </tr>
   </tbody>
 </table>
 
@@ -87,7 +92,7 @@ Or, more concisely:
 
     <img src="/slir/w150-h100-c15x10/path/to/image.jpg"/>
 
-However, SLIR will not enlarge images. So, if your source image is smaller than the desired size you will need to use CSS to make it the correct size.
+However, SLIR will not enlarge images (except if you enable fitting). So, if your source image is smaller than the desired size you will need to use CSS to make it the correct size.
 
 #### Resizing a JPEG without interlacing (for use in Flash)
 
@@ -106,6 +111,24 @@ However, SLIR will not enlarge images. So, if your source image is smaller than 
 Filenames that include special characters must be URL-encoded (e.g. plus sign, `+`, should be encoded as `%2B`) in order for SLIR to recognize them properly. This can be accomplished by passing your filenames through PHP's `rawurlencode()` function.
 
     <img src="/slir/w100/path/to/image%2Bfile.jpg"/>
+
+#### Fitting source image to destination
+
+Fitting does not work with cropping. If you give both `c` and `f` you'll get and exception.
+
+Usually `f` is used in combination with both `w` and `h`.
+
+    <img src="/slir/w100-h50-f1/path/to/200x200image.png"/>
+
+You get a 100x50 image: the source is resized to 50x50 to keep the aspect ratio and centered in the 100x50. The empty space on the left/right is left transparent (or filled with `b` color).
+
+    <img src="/slir/w1000-h50-f1/path/to/200x200image.png"/>
+
+You get a 1000x50 image: the source is resized to 50x50 and centered. The empty space is filled with transparent/bg color.
+
+    <img src="/slir/w600-h400-f1/path/to/200x200image.png"/>
+
+Source image is never enlarged: you will have a final image of 300x200 (aspect ratio of the given size parameters is kept), the source is not resized and the remaining 50 pixels on the left and right are filled with transparent/bg color.
 
 ## Supporting SLIR
 
